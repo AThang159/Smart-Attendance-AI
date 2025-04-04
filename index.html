@@ -43,7 +43,7 @@
         formData.append('image', blob, 'webcam.png'); // Gửi ảnh dưới dạng Blob
 
         // Gửi ảnh lên server
-        fetch('http://localhost:5000/face-detect', {
+        fetch('https://smart-attendance-ai.onrender.com/face-detect', {
           method: 'POST',
           body: formData, // Sử dụng FormData thay vì JSON
         })
