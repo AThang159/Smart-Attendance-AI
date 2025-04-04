@@ -4,6 +4,8 @@ from flask_cors import CORS  # Import CORS
 import numpy as np
 from werkzeug.utils import secure_filename
 from PIL import Image
+import os
+
 
 # Khởi tạo Flask app
 app = Flask(__name__)
@@ -72,4 +74,5 @@ def detect_face():
         return jsonify({"message": "Không nhận được ảnh!"}), 400
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port)
