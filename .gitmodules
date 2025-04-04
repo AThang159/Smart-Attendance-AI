@@ -1,3 +1,6 @@
 [submodule "model"]
 	path = model
 	url = https://github.com/Hung000anh/Smart-Attendance-AI
+[submodule "backend/model"]
+	path = backend/model
+	url = https://github.com/Hung000anh/Smart-Attendance-AI
