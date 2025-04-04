@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Webcam Capture</title>
+  <style>
+    video, canvas {
+      border: 1px solid black;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Chụp ảnh từ webcam</h1>
+  <video id="video" width="320" height="240" autoplay></video>
+  <br/>
+  <button id="capture">Chụp ảnh</button>
+  <br/>
+  <canvas id="canvas" width="320" height="240"></canvas>
+
+  <script>
+    const video = document.getElementById('video');
+    const canvas = document.getElementById('canvas');
+    const context = canvas.getContext('2d');
+    const captureButton = document.getElementById('capture');
+  
+    navigator.mediaDevices.getUserMedia({ video: true })
+      .then((stream) => {
+        video.srcObject = stream;
+      })
+      .catch((err) => {
+        console.error("Lỗi truy cập webcam: ", err);
+      });
+  
+      captureButton.addEventListener('click', () => {
+      // Vẽ ảnh từ video vào canvas
+      context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+      // Sử dụng toBlob để lấy ảnh dưới dạng Blob
+      canvas.toBlob((blob) => {
+        const formData = new FormData();
+        formData.append('image', blob, 'webcam.png'); // Gửi ảnh dưới dạng Blob
+
+        // Gửi ảnh lên server
+        fetch('http://localhost:5000/face-detect', {
+          method: 'POST',
+          body: formData, // Sử dụng FormData thay vì JSON
+        })
+        .then(response => response.json())
+        .then(data => {
+          console.log("Kết quả xử lý:", data);
+          alert(data.predicted_name || 'Xử lý xong!');
+        })
+        .catch(error => console.error('Lỗi gửi ảnh:', error));
+      }, 'image/png'); // Định dạng ảnh là PNG
+    });
+
+  </script>
+</body>
+</html>
