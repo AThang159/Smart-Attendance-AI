@@ -12,7 +12,10 @@ app = Flask(__name__)
 CORS(app)  # Thêm CORS để cho phép truy cập từ các domain khác
 
 # Tải mô hình EfficientNetB0 đã huấn luyện
-model = tf.keras.models.load_model('model @ 91c57e8/model/restnet50.keras')
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+MODEL_PATH = os.path.join(BASE_DIR, 'model', 'model', 'restnet50.keras')
+
+model = tf.keras.models.load_model(MODEL_PATH)
 
 # Danh sách các lớp (class names) tương ứng với mô hình
 class_names = ['Hùng Anh', 'Ngọc Anh', 'Tiểu Long', 'Nhật Tùng', 'Thành Lộc', 'Minh Long']  # Bạn thay thế với các lớp thực tế
