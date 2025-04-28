@@ -1,20 +1,20 @@
+from flask import Blueprint, request, jsonify
 import os
 import cv2
 import numpy as np
 from PIL import Image
-from flask import Flask, request, jsonify
-from flask_cors import CORS
-from tensorflow.keras.models import load_model
 from tensorflow.keras.preprocessing.image import img_to_array
 from tensorflow.keras.applications.resnet_v2 import preprocess_input
+from tensorflow.keras.models import load_model
 
-# Khởi tạo Flask app
-app = Flask(__name__)
-CORS(app)
+face_detect_bp = Blueprint('face_detect', __name__)
 
-# Load model
+
+# Xác định đường dẫn tới thư mục gốc của dự án
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-MODEL_PATH = os.path.join(BASE_DIR, 'model', 'model', 'efficientNetB0.keras')
+# Xây dựng đường dẫn tới model.keras
+MODEL_PATH = os.path.join(BASE_DIR, '..', 'model.keras')
+# Tải mô hình
 model = load_model(MODEL_PATH)
 
 # Nhãn lớp
@@ -49,9 +49,9 @@ def extract_face(image_cv2, input_size=(224, 224)):
     img_array = np.expand_dims(img_array, axis=0)
     img_array = preprocess_input(img_array)
 
-    return img_array, None
+    return img_array, (x, y, w, h), None
 
-@app.route('/face-detect', methods=['POST'])
+@face_detect_bp.route('/api/face-detect', methods=['POST'])
 def detect_face():
     if 'image' not in request.files:
         return jsonify({"message": "Không có ảnh trong yêu cầu!"}), 400
@@ -65,8 +65,7 @@ def detect_face():
         file_bytes = np.asarray(bytearray(file.read()), dtype=np.uint8)
         image_cv2 = cv2.imdecode(file_bytes, cv2.IMREAD_COLOR)
 
-        # Trích xuất khuôn mặt
-        img_array, error = extract_face(image_cv2)
+        img_array, face_coords, error = extract_face(image_cv2)
         if error:
             return jsonify({"message": error}), 400
 
@@ -75,22 +74,30 @@ def detect_face():
         confidence = float(np.max(predictions)) * 100
         predicted_index = int(np.argmax(predictions))
 
-        if confidence < 10:
+        if confidence < 80:
             predicted_name = "Unknown"
         else:
             predicted_name = class_labels[predicted_index]
 
-        return jsonify({
+        response = {
             "predicted_name": predicted_name,
             "confidence": f"{confidence:.2f}%",
             "message": "Nhận diện thành công!" if predicted_name != "Unknown" else "Không đủ tự tin để xác định người."
-        }), 200
+        }   
+
+        # Nếu có tọa độ khuôn mặt, trả về
+        if face_coords:
+            x, y, w, h = face_coords
+            response["face_box"] = {
+                "x": int(x),
+                "y": int(y),
+                "w": int(w),
+                "h": int(h)
+            }
+
+        return jsonify(response), 200
 
     except Exception as e:
         return jsonify({
             "message": f"Có lỗi xảy ra trong quá trình xử lý: {str(e)}"
         }), 500
-
-if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port)
